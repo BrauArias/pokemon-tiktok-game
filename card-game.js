@@ -1,3 +1,20 @@
+console.log("Script loaded"); // Verify script is loading
+
+// Test card generation immediately
+window.addEventListener('load', function() {
+  console.log("DOM loaded");
+  // Test if elements exist
+  console.log("Start button exists:", !!document.getElementById("start-game"));
+  console.log("App container exists:", !!document.getElementById("app"));
+  
+  // Test card generation
+  setTimeout(() => {
+    if (gameStarted) return;
+    console.log("Testing card generation");
+    generateCard(1, "testuser");
+  }, 2000);
+});
+
 // ===== GAME STATE =====
 let likeCounter = 0;
 let viewerCounter = 0;
@@ -169,11 +186,11 @@ function handleJoin(username) {
 }
 
 // ===== UI EVENT LISTENERS =====
-document.getElementById("start-game").addEventListener("click", () => {
+document.getElementById("start-game").addEventListener("click", function() {
   const username = document.getElementById("tiktok-username").value.trim();
   const likes = parseInt(document.getElementById("goal-likes").value);
   const joins = parseInt(document.getElementById("goal-joins").value);
-
+  
   if (username) {
     goalLikes = likes || 10;
     goalJoins = joins || 5;
@@ -254,4 +271,14 @@ function connect() {
 window.addEventListener('load', function() {
   // Preload some data
   console.log("Pokémon Gift Collector initialized");
+
+  document.getElementById("start-panel").style.display = "none";
+    document.getElementById("app").style.display = "flex";
+    document.body.classList.remove("start-panel-visible");
+
+    try {
+      connect();
+    } catch (e) {
+      console.log("WebSocket not available, using simulator");
+    }
 });
