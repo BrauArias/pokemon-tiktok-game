@@ -1,178 +1,95 @@
+/* Add these styles at the top of your CSS file */
+.start-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  color: white;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.start-panel h1 {
+  color: #ffdd57;
+  margin-bottom: 30px;
+  font-size: 28px;
+  text-align: center;
+}
+
+.start-panel label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.start-panel input {
+  width: 300px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #222;
+  color: white;
+  font-size: 16px;
+}
+
+.start-panel button {
+  margin-top: 30px;
+  padding: 12px 30px;
+  background: linear-gradient(90deg, #ff6b6b, #ffa94d);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.start-panel button:hover {
+  transform: scale(1.05);
+}
+
+/* Modify the body style to remove flex when start panel is showing */
+body.start-panel-visible {
+  display: block;
+  height: auto;
+  overflow: hidden;
+}
+
+/* Add this to your existing body style */
 body {
   margin: 0;
   padding: 0;
   background: #000;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  display: flex;
-  height: 100vh;
   color: #f0f0f0;
 }
 
+/* Keep all your existing styles below this point */
+.app {
+  display: none;
+  height: 100vh;
+}
+
+/* Rest of your existing CSS remains unchanged */
 .side-panel {
-  width: 300px;
-  background: linear-gradient(to bottom, #1a1a1a, #0d0d0d);
-  border-right: 2px solid #222;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  box-shadow: 4px 0 12px rgba(255,255,255,0.05);
-}
-
-.side-panel h2 {
-  margin-top: 0;
-  font-size: 22px;
-  color: #ffdd57;
-  border-bottom: 1px solid #444;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-}
-
-.side-panel label {
-  margin-top: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #f8f8f8;
-}
-
-.side-panel input,
-.side-panel select {
-  margin-top: 4px;
-  margin-bottom: 10px;
-  padding: 10px;
-  background: #222;
-  border: 1px solid #444;
-  color: white;
-  font-size: 14px;
-  border-radius: 6px;
-  width: 100%;
-}
-
-.side-panel button {
-  margin-top: 8px;
-  padding: 10px;
-  background: linear-gradient(90deg, #ff6b6b, #ffa94d);
-  color: #fff;
-  font-weight: bold;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.side-panel button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(255, 200, 100, 0.5);
+  /* ... keep all existing side-panel styles ... */
 }
 
 .content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(ellipse at center, #111 0%, #000 100%);
+  /* ... keep all existing content styles ... */
 }
 
 .pokemon-card {
-  width: 360px;
-  height: 640px;
-  border-radius: 24px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.1), 0 8px 20px rgba(0, 0, 0, 0.7);
-  position: relative;
-  animation: fadeInGlow 0.8s ease-out;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 20px;
-  box-sizing: border-box;
+  /* ... keep all existing pokemon-card styles ... */
 }
 
-.pokemon-img {
-  width: 100%;
-  height: auto;
-  max-height: 320px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
-  animation: float 3s ease-in-out infinite;
-  margin-top: 40px;
-}
-
-.pokemon-name {
-  font-size: 36px;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-  margin-top: 20px;
-  text-align: center;
-  letter-spacing: 1px;
-}
-
-.pokemon-types {
-  display: flex;
-  gap: 12px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.type {
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  background: linear-gradient(90deg, #555, #999);
-  color: #fff;
-  box-shadow: 0 0 6px rgba(255,255,255,0.2);
-  text-transform: uppercase;
-}
-
-.user-tag {
-  position: absolute;
-  bottom: 20px;
-  font-size: 16px;
-  color: white;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 10px 24px;
-  border-radius: 20px;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-}
-
-#connection-status {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #80ffb0;
-  font-weight: bold;
-  text-shadow: 0 0 5px #00ff80;
-}
-
-#like-count,
-#viewer-count {
-  margin-top: 6px;
-  font-size: 14px;
-  color: #ccc;
-}
-
-@keyframes fadeInGlow {
-  0% {
-    transform: scale(0.95);
-    opacity: 0;
-    box-shadow: none;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-    box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
-  }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
+/* ... and so on for all other existing styles ... */
