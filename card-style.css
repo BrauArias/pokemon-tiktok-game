@@ -5,34 +5,64 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
   height: 100vh;
+  color: #f0f0f0;
 }
 
 .side-panel {
   width: 300px;
-  background: #111;
-  color: #eee;
-  border-right: 1px solid #222;
+  background: linear-gradient(to bottom, #1a1a1a, #0d0d0d);
+  border-right: 2px solid #222;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  box-shadow: 4px 0 12px rgba(255,255,255,0.05);
 }
 
-.side-panel input, .side-panel select, .side-panel button {
+.side-panel h2 {
+  margin-top: 0;
+  font-size: 22px;
+  color: #ffdd57;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.side-panel label {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8f8f8;
+}
+
+.side-panel input,
+.side-panel select {
+  margin-top: 4px;
   margin-bottom: 10px;
   padding: 10px;
   background: #222;
-  border: none;
+  border: 1px solid #444;
   color: white;
   font-size: 14px;
   border-radius: 6px;
+  width: 100%;
 }
 
 .side-panel button {
+  margin-top: 8px;
+  padding: 10px;
   background: linear-gradient(90deg, #ff6b6b, #ffa94d);
   color: #fff;
   font-weight: bold;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.side-panel button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(255, 200, 100, 0.5);
 }
 
 .content {
@@ -53,7 +83,7 @@ body {
   border: 2px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 40px rgba(255, 255, 255, 0.1), 0 8px 20px rgba(0, 0, 0, 0.7);
   position: relative;
-  animation: fadeInScale 0.6s ease-out;
+  animation: fadeInGlow 0.8s ease-out;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -114,9 +144,32 @@ body {
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
-@keyframes fadeInScale {
-  0% { transform: scale(0.95); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+#connection-status {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #80ffb0;
+  font-weight: bold;
+  text-shadow: 0 0 5px #00ff80;
+}
+
+#like-count,
+#viewer-count {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+@keyframes fadeInGlow {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+    box-shadow: none;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+  }
 }
 
 @keyframes float {
