@@ -112,6 +112,7 @@ document.getElementById("start-game").addEventListener("click", () => {
         gameStarted = true;
         document.getElementById("start-panel").style.display = "none";
         document.getElementById("app").style.display = "flex";
+        document.body.classList.remove("start-panel-visible");
         connect(); // Start WebSocket connection
     } else {
         alert("Please enter your TikTok username to start the game.");
