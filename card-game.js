@@ -4,6 +4,17 @@ let goalLikes = 10;
 let goalJoins = 5;
 let gameStarted = false;
 let websocket = null;
+let cardHistory = [];
+const maxCards = 5;
+const tiktokUsernames = [
+  "gamergirl42", "pokefan99", "streamqueen", 
+  "battlemaster", "cardcollector", "livelover", 
+  "tiktoktrainer", "pokemonpro", "giftgiver", 
+  "viewervibes", "superfan", "ultraplayer",
+  "legendaryhunter", "shinylover", "pokedexmaster", 
+  "gymleader", "elitefour", "champion", 
+  "pokemonwhisperer", "tradingking"
+];
 
 const giftTiers = {
   1: 1,
@@ -113,9 +124,33 @@ async function generateCard(giftId, username = "Viewer") {
     <div class="user-tag">@${username}</div>
   `;
   
+  cardHistory.unshift({element: card, id: Date.now()});
+  if (cardHistory.length > maxCards) {
+    const oldCard = cardHistory.pop();
+    document.getElementById("card-container").removeChild(oldCard.element);
+  }
+  
+  updateCardPositions();
+}
+
+// Add this NEW function after generateCard:
+function updateCardPositions() {
   const container = document.getElementById("card-container");
   container.innerHTML = "";
-  container.appendChild(card);
+  
+  cardHistory.forEach((card, index) => {
+    if (index < maxCards) {
+      card.element.className = "pokemon-card card-" + index;
+      container.appendChild(card.element);
+    }
+  });
+}
+
+// Add this NEW function anywhere with other utility functions:
+
+function getRandomUsername() {
+  return tiktokUsernames[Math.floor(Math.random() * tiktokUsernames.length)] + 
+         Math.floor(Math.random() * 100);
 }
 
 function updateCounters() {
@@ -172,24 +207,26 @@ document.getElementById("start-game").addEventListener("click", () => {
 });
 
 // Simulation buttons
-document.getElementById("send-gift").addEventListener("click", () => {
-    if (!gameStarted) return;
-    const username = document.getElementById("username").value.trim() || `viewer${Math.floor(Math.random()*9999)}`;
-    const giftId = parseInt(document.getElementById("gift-type").value);
-    generateCard(giftId, username);
-});
-
 document.getElementById("simulate-like").addEventListener("click", () => {
     if (!gameStarted) return;
-    handleLike(`simulated_user${likeCounter+1}`);
+    handleLike(getRandomUsername());
 });
 
 document.getElementById("simulate-join").addEventListener("click", () => {
     if (!gameStarted) return;
-    handleJoin(`simulated_user${viewerCounter+1}`);
+    handleJoin(getRandomUsername());
+});
+
+document.getElementById("send-gift").addEventListener("click", () => {
+    if (!gameStarted) return;
+    const username = document.getElementById("username").value.trim() || getRandomUsername();
+    const giftId = parseInt(document.getElementById("gift-type").value);
+    generateCard(giftId, username);
 });
 
 // Initialize
 window.addEventListener('load', function() {
     // Don't auto-connect - wait for start game button
+    
 });
+
