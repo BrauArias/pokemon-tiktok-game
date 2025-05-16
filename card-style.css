@@ -1,4 +1,4 @@
-/* Start Panel Styles (unchanged) */
+/* Start Panel Styles */
 .start-panel {
   position: fixed;
   top: 0;
@@ -16,7 +16,7 @@
   box-sizing: border-box;
 }
 
-/* ... keep all existing start-panel styles ... */
+/* ... [keep all existing start-panel styles] ... */
 
 /* Main App Layout */
 body {
@@ -56,14 +56,14 @@ body.start-panel-visible {
   overflow-y: auto;
 }
 
-/* ... keep all existing side-panel styles ... */
+/* ... [keep all existing side-panel styles] ... */
 
 /* Card Container - centered in remaining space */
 .content {
   position: fixed;
   left: 0;
   top: 0;
-  width: calc(100% - 300px); /* Full width minus panel */
+  width: calc(100% - 300px);
   height: 100%;
   display: flex;
   align-items: center;
@@ -82,22 +82,7 @@ body.start-panel-visible {
 
 /* Pokemon Card with stacking effect */
 .pokemon-card {
-  width: 360px;
-  height: 640px;
-  border-radius: 24px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.1), 0 8px 20px rgba(0, 0, 0, 0.7);
-  position: absolute;
-  animation: fadeInGlow 0.8s ease-out;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 20px;
-  box-sizing: border-box;
+  /* ... [keep all existing card styles] ... */
   transition: all 0.5s ease;
 }
 
@@ -108,4 +93,4 @@ body.start-panel-visible {
 .card-3 { transform: translateX(80px) scale(0.9); z-index: 4; opacity: 0.8; }
 .card-4 { transform: translateX(160px) scale(0.8); z-index: 3; opacity: 0.6; }
 
-/* ... keep all other existing styles ... */
+/* ... [keep all other existing styles] ... */
