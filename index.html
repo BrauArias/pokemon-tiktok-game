@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pokémon Gift Collector</title>
+  <link rel="stylesheet" href="card-style.css">
+</head>
+<body>
+  <div class="start-panel" id="start-panel">
+    <h1>Start Pokémon Gift Collector</h1>
+    <label for="tiktok-username">Your TikTok Username</label>
+    <input type="text" id="tiktok-username" placeholder="e.g. your_tiktok_name" />
+
+    <label for="goal-likes">How many likes for a free Pokémon card?</label>
+    <input type="number" id="goal-likes" placeholder="e.g. 10" />
+
+    <label for="goal-joins">How many joins for a free Pokémon card?</label>
+    <input type="number" id="goal-joins" placeholder="e.g. 5" />
+
+    <button id="start-game">Start Game</button>
+  </div>
+
+  <div class="app" id="app" style="display:none">
+    <div class="side-panel">
+      <h2>Controls</h2>
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Viewer username" />
+      <label>Gift Type</label>
+      <select id="gift-type">
+        <option value="1">Rose</option>
+        <option value="5">TikTok</option>
+        <option value="10">Diamond</option>
+        <option value="100">Galaxy</option>
+        <option value="1000">Universe</option>
+      </select>
+      <button id="send-gift">Send Gift</button>
+      <hr>
+      <button id="simulate-like">Simulate Like</button>
+      <button id="simulate-join">Simulate Viewer Join</button>
+      <p id="connection-status">Waiting to connect...</p>
+      <div id="like-count">Likes: 0</div>
+      <div id="viewer-count">Viewers Joined: 0</div>
+    </div>
+    <div class="content">
+      <div id="card-container"></div>
+    </div>
+  </div>
+
+  <script src="card-game.js"></script>
+</body>
+</html>
