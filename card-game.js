@@ -67,6 +67,62 @@ function connect() {
     };
 }
 
+function getRandomPokemonID(tier) {
+  const [min, max] = tierRanges[tier] || [1, 151];
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function formatName(name) {
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+async function fetchPokemonData(id) {
+  try {
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+    if (!res.ok) throw new Error('Pokemon not found');
+    const data = await res.json();
+    return {
+      name: formatName(data.name),
+      types: data.types.map(t => formatName(t.type.name)),
+      image: data.sprites.other["official-artwork"].front_default || data.sprites.front_default
+    };
+  } catch (error) {
+    console.error("Error fetching Pokemon:", error);
+    // Return a default Pokemon if there's an error
+    return {
+      name: "Missingno",
+      types: ["Normal"],
+      image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png"
+    };
+  }
+}
+
+async function generateCard(giftId, username = "Viewer") {
+  const tier = giftTiers[giftId] || 1;
+  const id = getRandomPokemonID(tier);
+  const pokemon = await fetchPokemonData(id);
+  
+  const card = document.createElement("div");
+  card.className = "pokemon-card";
+  card.innerHTML = `
+    <img src="${pokemon.image}" class="pokemon-img" alt="${pokemon.name}" />
+    <div class="pokemon-name">${pokemon.name}</div>
+    <div class="pokemon-types">
+      ${pokemon.types.map(t => `<span class="type">${t}</span>`).join('')}
+    </div>
+    <div class="user-tag">@${username}</div>
+  `;
+  
+  const container = document.getElementById("card-container");
+  container.innerHTML = "";
+  container.appendChild(card);
+}
+
+function updateCounters() {
+  document.getElementById("like-count").textContent = `Likes: ${likeCounter}`;
+  document.getElementById("viewer-count").textContent = `Viewers Joined: ${viewerCounter}`;
+}
+
 // Event handlers for TikTok events
 function handleLike(username) {
     likeCounter++;
@@ -81,7 +137,6 @@ function handleGift(username, giftId) {
 }
 
 function handleFollow(username) {
-    // You might want to handle follows differently
     viewerCounter++;
     updateCounters();
     if (viewerCounter % goalJoins === 0) {
@@ -97,10 +152,7 @@ function handleJoin(username) {
     }
 }
 
-// Rest of your existing functions (getRandomPokemonID, formatName, fetchPokemonData, generateCard, updateCounters)
-// ... keep all these functions exactly as they were ...
-
-// Modified start game function
+// Start game function
 document.getElementById("start-game").addEventListener("click", () => {
     const username = document.getElementById("tiktok-username").value.trim();
     const likes = parseInt(document.getElementById("goal-likes").value);
@@ -119,7 +171,7 @@ document.getElementById("start-game").addEventListener("click", () => {
     }
 });
 
-// Keep your existing simulation buttons
+// Simulation buttons
 document.getElementById("send-gift").addEventListener("click", () => {
     if (!gameStarted) return;
     const username = document.getElementById("username").value.trim() || `viewer${Math.floor(Math.random()*9999)}`;
@@ -137,7 +189,7 @@ document.getElementById("simulate-join").addEventListener("click", () => {
     handleJoin(`simulated_user${viewerCounter+1}`);
 });
 
-// Initialize connection when page loads
+// Initialize
 window.addEventListener('load', function() {
     // Don't auto-connect - wait for start game button
 });
