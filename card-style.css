@@ -64,15 +64,6 @@ body.start-panel-visible {
   overflow: hidden;
 }
 
-/* Add this to your existing body style */
-body {
-  margin: 0;
-  padding: 0;
-  background: #000;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #f0f0f0;
-}
-
 /* Keep all your existing styles below this point */
 .app {
   display: none;
