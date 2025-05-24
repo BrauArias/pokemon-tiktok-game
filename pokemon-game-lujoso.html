@@ -1,458 +1,103 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Pokémon Gift Collector - Definitive</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="header">
-        <h1>Pokémon Gift Collector</h1>
-        <p class="subtitle">Collect Pokémon from TikTok LIVE Gifts!</p>
-    </div>
+// server.js
 
-    <div class="main-container">
-        <div class="control-panel">
-            <button id="connect-btn">Connect to TikTok</button>
-            <button id="disconnect-btn" disabled>Disconnect</button>
-            <div class="status-indicator">
-                <div id="status-dot" class="status-dot disconnected"></div>
-                <span id="status-text" class="status-text">Disconnected</span>
-            </div>
-            <div class="connection-stats">
-                <div class="stat-row"><span class="stat-label">Status:</span><span id="connection-status" class="stat-value">Inactive</span></div>
-                <div class="stat-row"><span class="stat-label">Last Gift:</span><span id="last-gift-time" class="stat-value">Never</span></div>
-                <div class="stat-row"><span class="stat-label">Collected:</span><span id="total-pokemon" class="stat-value">0</span></div>
-                <div class="stat-row"><span class="stat-label">Viewers:</span><span id="active-viewers" class="stat-value">0</span></div>
-            </div>
-             <div>
-                <h3>Pokémon Region</h3>
-                <select id="region-select" class="emulator-select" style="margin-bottom: 5px;">
-                    <option value="all">All Regions</option>
-                    <option value="kanto">Kanto</option>
-                    <option value="johto">Johto</option>
-                    <option value="hoenn">Hoenn</option>
-                    <option value="sinnoh">Sinnoh</option>
-                    <option value="unova">Unova</option>
-                    <option value="kalos">Kalos</option>
-                    <option value="alola">Alola</option>
-                    <option value="galar">Galar</option>
-                    <option value="paldea">Paldea</option>
-                    <option value="unknown">Unknown Region</option> 
-                </select>
-                <p id="pokemon-pool-status" style="font-size: 12px; color: #555; margin:0;"></p>
-            </div>
-        </div>
+const { WebcastPushConnection } = require('tiktok-live-connector');
+const WebSocket = require('ws');
 
-        <div class="game-area">
-            <div class="pokemon-cards" id="pokemon-cards">
-                </div>
-        </div>
+// ¡IMPORTANTE! Reemplaza "braxargg" con tu propio nombre de usuario de TikTok
+const tiktokUsername = "braxargg"; 
+const tiktokConnection = new WebcastPushConnection(tiktokUsername);
 
-        <div class="emulator-panel">
-            <h3>Event Emulator</h3>
-           <div class="emulator-controls">
-                <input type="text" id="emulator-username" class="emulator-input" placeholder="Viewer username" value="pokefan123">
-                <select id="emulator-gift-type" class="emulator-select">
-                    <option value="rose">Rose</option>
-                    <option value="tiktok">TikTok</option>
-                    <option value="diamond">Diamond</option>
-                    <option value="galaxy">Galaxy</option>
-                    <option value="universe">Universe</option>
-                </select>
-                <button id="send-gift-btn" class="btn-secondary" disabled>Send Gift</button>
-                <button id="add-viewer-btn" class="btn-secondary">Add Viewer</button>
-                <button id="auto-send-btn" disabled>Auto Send (5s)</button>
-                <button id="stop-auto-btn" disabled>Stop Auto</button>
-                <button id="emulate-100-likes-btn" class="btn-secondary" disabled>Emulate 100 User Likes Gift</button>
-            </div>
-        </div>
-    </div>
+// WebSocket Server
+const wss = new WebSocket.Server({ port: 21213 });
 
-<script>
-    // --- Global Configuration & Constants ---
-    const giftTypes = {
-        rose: { id: 1, name: "rose" }, tiktok: { id: 5, name: "tiktok" },
-        diamond: { id: 10, name: "diamond" }, galaxy: { id: 100, name: "galaxy" },
-        universe: { id: 1000, name: "universe" }
-    };
-    const giftRarityChances = {
-        rose:     { legendary: 0.005, epic: 0.025, rare: 0.12, common: 0.85 }, // Adjusted for more commons
-        tiktok:   { legendary: 0.01,  epic: 0.05,  rare: 0.24, common: 0.70 },
-        diamond:  { legendary: 0.03,  epic: 0.12, rare: 0.35, common: 0.50 },
-        galaxy:   { legendary: 0.08,  epic: 0.27, rare: 0.40, common: 0.25 },
-        universe: { legendary: 0.25,  epic: 0.40, rare: 0.25, common: 0.10 },
-        user_100_likes_reward: { legendary: 0.00, epic: 0.00, rare: 0.00, common: 1.00 },
-    };
-    // Adjust SHINY_CHANCE: 1/X. If you expect ~150 gifts for one shiny:
-    const SHINY_CHANCE = 1 / 150; 
+// --- NEW: Store like counts per user and their milestones ---
+let userLikeData = new Map(); // Key: uniqueId, Value: { accumulatedLikes: number, nextMilestone: number }
+const USER_LIKE_MILESTONE_INTERVAL = 100;
 
-    // --- Global State Variables ---
-    let allPokemonData = [];
-    let currentPokemonPool = [];
-    const sampleUsernames = ["pokefan123", "gottacatch1", "ashketchum", "mistywater", "brockstone", "gymleader_x", "elite_trainer", "prof_oakley", "live_viewer_99"];
-    let websocket = null;
-    let totalPokemonCollected = 0;
-    let lastGiftTime = null;
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 5;
-    let reconnectInterval = null;
-    let autoSendInterval = null;
+async function startTikTokConnection() {
+    try {
+        await tiktokConnection.connect();
+        console.log(`Connected to TikTok LIVE: @${tiktokUsername}`);
 
-    // --- DOM Element References ---
-    const connectBtn = document.getElementById('connect-btn');
-    const disconnectBtn = document.getElementById('disconnect-btn');
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
-    const connectionStatus = document.getElementById('connection-status');
-    const lastGiftTimeDisplay = document.getElementById('last-gift-time');
-    const totalPokemonDisplay = document.getElementById('total-pokemon');
-    const activeViewersDisplay = document.getElementById('active-viewers');
-    const pokemonCardsContainer = document.getElementById('pokemon-cards');
-    const emulatorUsername = document.getElementById('emulator-username');
-    const emulatorGiftType = document.getElementById('emulator-gift-type');
-    const sendGiftBtn = document.getElementById('send-gift-btn');
-    const addViewerBtn = document.getElementById('add-viewer-btn');
-    const autoSendBtn = document.getElementById('auto-send-btn');
-    const stopAutoBtn = document.getElementById('stop-auto-btn');
-    const regionSelect = document.getElementById('region-select');
-    const pokemonPoolStatus = document.getElementById('pokemon-pool-status');
-    const emulate100LikesBtn = document.getElementById('emulate-100-likes-btn');
-
-    // --- Helper Functions ---
-    function getPokemonFileName(name) {
-        if (!name || typeof name !== 'string') return "unown";
-        // Prioritize user-defined urlName if present in the JSON object later
-        return name.toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/mr\.-mime/g, 'mr-mime')
-            .replace(/farfetch'd/g, 'farfetchd')
-            .replace(/nidoran♀/g, 'nidoran-f')
-            .replace(/nidoran♂/g, 'nidoran-m')
-            .replace(/type:\s*null/g, 'type-null') // handles "type: null" or "type:null"
-            .replace(/tapu\s+/g, 'tapu-')       // e.g. Tapu Koko -> tapu-koko
-            .replace(/:/g, '')
-            .replace(/['’.´]/g, '')
-            .replace(/[^\w-]+/g, ''); // Remove remaining non-alphanumeric except hyphens
-    }
-
-    // --- Core Logic Functions ---
-    async function loadPokemonData() {
-        pokemonPoolStatus.textContent = 'Loading Pokémon data...';
-        sendGiftBtn.disabled = true; autoSendBtn.disabled = true;
-        try {
-            const response = await fetch('pokemon_data.json');
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: Could not load pokemon_data.json. Make sure the file exists and is in the same directory.`);
-            }
-            allPokemonData = await response.json();
-            if (!Array.isArray(allPokemonData)) { // Basic check if it's an array
-                throw new Error('pokemon_data.json is not a valid JSON array.');
-            }
-            if (allPokemonData.length === 0) {
-                 pokemonPoolStatus.textContent = 'No Pokémon found in data file!';
-                 console.warn("pokemon_data.json is empty.");
-            } else {
-                filterPokemonByRegion(regionSelect.value);
-                console.log(`${allPokemonData.length} Pokémon loaded successfully.`);
-            }
-        } catch (error) {
-            console.error("Fatal Error: Could not load or parse Pokémon data:", error);
-            pokemonPoolStatus.innerHTML = `<strong>Error loading Pokémon data!</strong><br/>Ensure 'pokemon_data.json' exists, is valid JSON, and is in the same folder as the HTML file. Check console (F12) for details.`;
-        }
-    }
-
-     function filterPokemonByRegion(selectedRegion) {
-        if (allPokemonData.length === 0) {
-            currentPokemonPool = [];
-            pokemonPoolStatus.textContent = 'Pokémon data not loaded or is empty.';
-            sendGiftBtn.disabled = true; 
-            autoSendBtn.disabled = true;
-            if (emulate100LikesBtn) emulate100LikesBtn.disabled = true;
-            return;
-        }
-
-        selectedRegion = selectedRegion.toLowerCase();
-        if (selectedRegion === "all") {
-            currentPokemonPool = [...allPokemonData];
-        } else {
-            currentPokemonPool = allPokemonData.filter(p => p.region && p.region.toLowerCase() === selectedRegion);
-        }
-
-        const poolIsEmpty = currentPokemonPool.length === 0;
-        if (poolIsEmpty) {
-            pokemonPoolStatus.textContent = `0 Pokémon in ${selectedRegion === "all" ? "selected pool" : selectedRegion}.`;
-        } else {
-            pokemonPoolStatus.textContent = `${currentPokemonPool.length} Pokémon available.`;
-        }
-        sendGiftBtn.disabled = poolIsEmpty; 
-        autoSendBtn.disabled = poolIsEmpty;
-        if (emulate100LikesBtn) emulate100LikesBtn.disabled = poolIsEmpty;
-    }
-    
-    function assignRandomPokemon(username, giftId, giftName) {
-        if (currentPokemonPool.length === 0) {
-            console.warn("Attempted to assign Pokémon, but current pool is empty.");
-            const card = document.createElement('div');
-            card.className = 'pokemon-card';
-            card.innerHTML = `<h3 class="pokemon-name" style="margin-top: 40%; text-align:center; color:white;">No Pokémon in current filter!</h3><p style="color:white;text-align:center;">Streamer: adjust region or check data.</p>`;
-            pokemonCardsContainer.insertBefore(card, pokemonCardsContainer.firstChild);
-            Array.from(pokemonCardsContainer.children).slice(1).forEach(c => pokemonCardsContainer.removeChild(c));
-            return;
-        }
-
-        totalPokemonCollected++;
-        let selectedRarity = "common";
-        const giftKey = (typeof giftName === 'string' ? giftName.toLowerCase().split(' ')[0] : "rose");
-        const chances = giftRarityChances[giftKey] || giftRarityChances.rose;
-
-        let rand = Math.random();
-        let cumulativeChance = 0;
-        // Order of checking matters: from rarest to most common
-        if (rand < (cumulativeChance += (chances.legendary || 0))) selectedRarity = "legendary";
-        else if (rand < (cumulativeChance += (chances.epic || 0))) selectedRarity = "epic";
-        else if (rand < (cumulativeChance += (chances.rare || 0))) selectedRarity = "rare";
-        else selectedRarity = "common";
-        
-        let pokemonToChooseFrom = currentPokemonPool.filter(p => p.rarity && p.rarity.toLowerCase() === selectedRarity);
-        
-        // Fallback if no Pokémon of selected rarity in current pool
-        if (pokemonToChooseFrom.length === 0) {
-            console.warn(`No '${selectedRarity}' Pokémon in current pool. Trying 'rare'...`);
-            pokemonToChooseFrom = currentPokemonPool.filter(p => p.rarity && p.rarity.toLowerCase() === 'rare');
-        }
-        if (pokemonToChooseFrom.length === 0) {
-            console.warn(`No 'rare' Pokémon in current pool. Trying 'common'...`);
-            pokemonToChooseFrom = currentPokemonPool.filter(p => p.rarity && p.rarity.toLowerCase() === 'common');
-        }
-        if (pokemonToChooseFrom.length === 0) { // If still no common, pick any from current pool
-            console.warn(`No 'common' Pokémon. Picking any from current pool.`);
-            pokemonToChooseFrom = [...currentPokemonPool];
-             if (pokemonToChooseFrom.length === 0) {
-                console.error("Critical: Current pool became completely empty during selection. Displaying error.");
-                const errCard = document.createElement('div');
-                errCard.className = 'pokemon-card';
-                errCard.innerHTML = `<h3 class="pokemon-name" style="margin-top: 40%; text-align:center; color:white;">Data Error!</h3><p style="color:white;text-align:center;">Unable to select a Pokémon.</p>`;
-                pokemonCardsContainer.insertBefore(errCard, pokemonCardsContainer.firstChild);
-                Array.from(pokemonCardsContainer.children).slice(1).forEach(c => pokemonCardsContainer.removeChild(c));
-                return;
-            }
-        }
-
-        const pokemon = pokemonToChooseFrom[Math.floor(Math.random() * pokemonToChooseFrom.length)];
-        if (!pokemon) {
-            console.error("Failed to select a Pokémon even after fallbacks. Pokemon object is undefined.");
-            return;
-        }
-        
-        const isShiny = Math.random() < SHINY_CHANCE;
-        let displayName = pokemon.name ? pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1) : "Unknown";
-        
-        // Use pokemon.urlName if provided, otherwise generate from pokemon.name
-        const baseNameForUrl = pokemon.urlName ? getPokemonFileName(pokemon.urlName) : getPokemonFileName(pokemon.name);
-        const spriteUrl = `https://img.pokemondb.net/sprites/home/${isShiny ? 'shiny' : 'normal'}/${baseNameForUrl}.png`;
-
-        const card = document.createElement('div');
-        card.className = 'pokemon-card';
-        card.innerHTML = `
-            <div class="pokemon-image-container">
-                <img class="pokemon-image" src="${spriteUrl}" alt="${displayName}" onerror="this.src='https://img.pokemondb.net/sprites/items/poke-ball.png'; this.style='width:64px;height:64px;margin-top:100px;'; console.error('Error loading image: ${spriteUrl}')">
-            </div>
-            <h3 class="pokemon-name ${isShiny ? 'shiny' : ''}">${isShiny ? '✨Shiny ' : ''}${displayName}${isShiny ? '✨' : ''}</h3>
-            <div class="pokemon-types">
-                ${(pokemon.types && Array.isArray(pokemon.types)) ? pokemon.types.map(type => `<span class="pokemon-type">${type.charAt(0).toUpperCase() + type.slice(1)}</span>`).join('') : '<span class="pokemon-type">Unknown</span>'}
-            </div>
-            <div class="pokemon-stats-display">
-                <div class="stat-item">
-                    <span class="stat-label">HP</span>
-                    <span class="stat-value">${pokemon.stats && pokemon.stats.hp !== undefined ? pokemon.stats.hp : 'N/A'}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">ATK</span>
-                    <span class="stat-value">${pokemon.stats && pokemon.stats.atk !== undefined ? pokemon.stats.atk : 'N/A'}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">DEF</span>
-                    <span class="stat-value">${pokemon.stats && pokemon.stats.def !== undefined ? pokemon.stats.def : 'N/A'}</span>
-                </div>
-            </div>
-            <div class="user-name">@${username}</div>`;
-        
-        const existingCards = Array.from(pokemonCardsContainer.children);
-        existingCards.forEach((c, i) => {
-            c.classList.remove('prev-card-1', 'prev-card-2', 'prev-card-3', 'prev-card-4');
-            if (i === 0) c.classList.add('prev-card-1'); else if (i === 1) c.classList.add('prev-card-2');
-            else if (i === 2) c.classList.add('prev-card-3'); else if (i === 3) c.classList.add('prev-card-4');
-            else pokemonCardsContainer.removeChild(c);
-        });
-        pokemonCardsContainer.insertBefore(card, pokemonCardsContainer.firstChild);
-        updateConnectionStats();
-    }
-
-    function connect() { 
-        if (websocket) return;
-        updateStatus('connecting', 'Connecting...');
-        connectBtn.disabled = true; disconnectBtn.disabled = false;
-        websocket = new WebSocket("ws://localhost:21213/");
-        websocket.onopen = () => {
-            reconnectAttempts = 0; clearInterval(reconnectInterval);
-            updateStatus('connected', 'Connected to TikTok LIVE'); updateConnectionStats();
-        };
-        websocket.onclose = () => {
-            websocket = null; connectBtn.disabled = false; disconnectBtn.disabled = true;
-            if (reconnectAttempts < maxReconnectAttempts) {
-                reconnectAttempts++; updateStatus('disconnected', `Disconnected - Retrying (${reconnectAttempts}/${maxReconnectAttempts})`);
-                reconnectInterval = setTimeout(connect, 5000); // Increased retry interval
-            } else { updateStatus('disconnected', 'Disconnected - Click Connect'); }
-            updateConnectionStats();
-        };
-        websocket.onerror = (error) => { console.error("WebSocket Error:", error); updateStatus('disconnected', 'Connection Error'); /* Don't close here, onclose will handle */ };
-            websocket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.event === 'gift') {
-                    handleGiftEvent(data.data);
-                } else if (data.event === 'viewerCount') {
-                    activeViewersDisplay.textContent = data.data.viewerCount;
-                } else if (data.event === 'userSpecificLikeGift') { // --- NEW: Handle user specific like gift ---
-                    console.log(`User specific like gift received for: ${data.data.uniqueId} for reaching ${data.data.milestone} likes!`);
-                    // The server sends 'user_100_likes_reward' as giftName
-                    handleGiftEvent({ 
-                        uniqueId: data.data.uniqueId, 
-                        giftId: `user_like_${data.data.milestone}`, // A custom identifier for the "gift"
-                        giftName: data.data.giftName, // This will be 'user_100_likes_reward'
-                        timestamp: data.data.timestamp
-                    });
-                } else {
-                    // console.log("Received unhandled message:", data);
+        // Listener para regalos de TikTok (existing)
+        tiktokConnection.on('gift', data => {
+            console.log(`${data.uniqueId} sent gift ${data.giftId} (${data.giftName})`);
+            broadcastToClients({
+                event: 'gift',
+                data: {
+                    uniqueId: data.uniqueId,
+                    giftId: data.giftId,
+                    giftName: data.giftName,
+                    timestamp: Date.now()
                 }
-            } catch (e) { console.error("Error parsing message from server:", e, "Raw data:", event.data); }
-        };
-    }
-    function disconnect() { if (websocket) { websocket.close(); } /* onclose handles UI updates */ }
-    function updateStatus(status, text) { 
-        statusDot.className = 'status-dot ' + status;
-        statusText.textContent = text; connectionStatus.textContent = text;
-        connectionStatus.style.color = status === 'connected' ? '#4CAF50' : status === 'connecting' ? '#FFC107' : '#f44336';
-    }
-    function updateConnectionStats() { 
-        totalPokemonDisplay.textContent = totalPokemonCollected;
-        if (lastGiftTime) {
-            const diff = Math.floor((Date.now() - lastGiftTime) / 1000);
-            lastGiftTimeDisplay.textContent = diff < 60 ? `${diff}s ago` : `${Math.floor(diff/60)}m ago`;
-        } else { lastGiftTimeDisplay.textContent = "Never"; }
-    }
-    function handleGiftEvent(data) {
-        if (!data || !data.uniqueId || !data.giftName) {
-            console.warn("Received incomplete gift data:", data);
-            return;
-        }
-        lastGiftTime = Date.now();
-        assignRandomPokemon(data.uniqueId, data.giftId, data.giftName); // giftId is passed but not used by assignRandomPokemon
-        updateConnectionStats();
-    }
-    function sendEmulatedGift() {
-        const username = emulatorUsername.value.trim() || getRandomUsername();
-        const giftDetails = giftTypes[emulatorGiftType.value];
-        if (!giftDetails) { console.error("Invalid gift type in emulator."); return; }
-        handleGiftEvent({ uniqueId: username, giftId: giftDetails.id, giftName: giftDetails.name, timestamp: Date.now() });
-    }
-    function addEmulatedViewer() {
-        activeViewersDisplay.textContent = parseInt(activeViewersDisplay.textContent || "0") + 1;
-    }
-    function startAutoSend() {
-        if(autoSendInterval || currentPokemonPool.length === 0) return; // Don't start if pool is empty
-        autoSendBtn.disabled = true; stopAutoBtn.disabled = false;
-        sendEmulatedGift(); 
-        autoSendInterval = setInterval(() => {
-            if (currentPokemonPool.length === 0) { // Stop if pool becomes empty
-                stopAutoSend();
-                return;
-            }
-            emulatorUsername.value = getRandomUsername();
-            const giftKeys = Object.keys(giftTypes);
-            emulatorGiftType.value = giftKeys[Math.floor(Math.random() * giftKeys.length)];
-            sendEmulatedGift();
-        }, 5000);
-    }
-    function stopAutoSend() {
-        autoSendBtn.disabled = (currentPokemonPool.length === 0); // Re-enable only if pool has items
-        stopAutoBtn.disabled = true;
-        clearInterval(autoSendInterval); autoSendInterval = null;
-    }
-    function getRandomUsername() { return sampleUsernames[Math.floor(Math.random() * sampleUsernames.length)]; }
-
-    // --- NEW: Event Listener for the 100 Likes Emulator Button ---
-    if (emulate100LikesBtn) { // Check if button exists
-        emulate100LikesBtn.addEventListener('click', () => {
-            if (currentPokemonPool.length === 0) {
-                alert("Pokémon data not loaded or current pool is empty. Cannot emulate gift.");
-                return;
-            }
-            const username = emulatorUsername.value.trim() || getRandomUsername();
-            console.log(`Emulating '100 User Likes' Common Pokémon gift for ${username}`);
-            handleGiftEvent({
-                uniqueId: username,
-                giftId: 'emulator_like_milestone', // Custom ID for emulator
-                giftName: 'user_100_likes_reward', // Use the specific giftName for common Pokémon
-                timestamp: Date.now()
             });
         });
-    }
 
-    // --- MODIFIED: Initial Setup on DOMContentLoaded ---
-    document.addEventListener('DOMContentLoaded', () => {
-        updateStatus('disconnected', 'Disconnected');
-        // loadPokemonData will be called which then calls filterPokemonByRegion
-        // filterPokemonByRegion should handle enabling/disabling the new emulate100LikesBtn too.
-        loadPokemonData(); 
-        updateConnectionStats();
+        // Listener para nuevos espectadores (existing)
+        tiktokConnection.on('viewerCountUpdate', (data) => {
+            console.log(`New viewer count: ${data.viewerCount}`);
+            broadcastToClients({
+                event: 'viewerCount',
+                data: {
+                    viewerCount: data.viewerCount,
+                    timestamp: Date.now()
+                }
+            });
+        });
 
-        connectBtn.addEventListener('click', connect);
-        disconnectBtn.addEventListener('click', disconnect);
-        sendGiftBtn.addEventListener('click', sendEmulatedGift);
-        addViewerBtn.addEventListener('click', addEmulatedViewer);
-        autoSendBtn.addEventListener('click', startAutoSend);
-        stopAutoBtn.addEventListener('click', stopAutoSend);
-        regionSelect.addEventListener('change', (event) => filterPokemonByRegion(event.target.value));
-        // Note: The new emulate100LikesBtn listener is added above.
-    });
-    // Modify filterPokemonByRegion to also enable/disable the new emulator button:
-    // (This is a snippet of the function, showing where to add the line)
-    /*
-    function filterPokemonByRegion(selectedRegion) {
-        // ... (existing code) ...
+        // --- MODIFIED: Listener for likes ---
+        tiktokConnection.on('like', (data) => {
+            const userId = data.uniqueId;
+            const likesInThisEvent = data.likeCount || 1; // data.likeCount might not always be present or accurate for single likes
 
-        if (currentPokemonPool.length === 0) {
-            pokemonPoolStatus.textContent = `0 Pokémon in ${selectedRegion === "all" ? "selected pool" : selectedRegion}.`;
-            sendGiftBtn.disabled = true; autoSendBtn.disabled = true;
-            if (emulate100LikesBtn) emulate100LikesBtn.disabled = true; // Add this
-        } else {
-            pokemonPoolStatus.textContent = `${currentPokemonPool.length} Pokémon available.`;
-            sendGiftBtn.disabled = false; autoSendBtn.disabled = false;
-            if (emulate100LikesBtn) emulate100LikesBtn.disabled = false; // Add this
-        }
-    }
-    */
-    // Make sure to integrate the above changes into your existing filterPokemonByRegion function.
-    // Also, in loadPokemonData, after successful loading and initial filtering:
-    /*
-    async function loadPokemonData() {
-        // ...
-        try {
-            // ...
-            if (allPokemonData.length > 0) {
-                filterPokemonByRegion(regionSelect.value); // This will set button states
-                // The lines below might be redundant if filterPokemonByRegion handles it
-                // sendGiftBtn.disabled = currentPokemonPool.length === 0;
-                // autoSendBtn.disabled = currentPokemonPool.length === 0;
-                // if(emulate100LikesBtn) emulate100LikesBtn.disabled = currentPokemonPool.length === 0;
+            if (!userLikeData.has(userId)) {
+                userLikeData.set(userId, { accumulatedLikes: 0, nextMilestone: USER_LIKE_MILESTONE_INTERVAL });
             }
-            // ...
-        } // ...
-    }
-    */
 
-</script>
-</body>
-</html>
+            let userData = userLikeData.get(userId);
+            userData.accumulatedLikes += likesInThisEvent;
+            // console.log(`${userId} sent ${likesInThisEvent} like(s). New total for user: ${userData.accumulatedLikes}. Next milestone: ${userData.nextMilestone}`);
+
+            if (userData.accumulatedLikes >= userData.nextMilestone) {
+                console.log(`🎉 User ${userId} reached like milestone of ${userData.nextMilestone}! Gifting common Pokémon.`);
+                broadcastToClients({
+                    event: 'userSpecificLikeGift', // New event type
+                    data: {
+                        uniqueId: userId,
+                        giftName: 'user_100_likes_reward', // Special name for common Pokémon rarity
+                        milestone: userData.nextMilestone,
+                        timestamp: Date.now()
+                    }
+                });
+                userData.nextMilestone += USER_LIKE_MILESTONE_INTERVAL; // Set the next milestone for this user
+            }
+            userLikeData.set(userId, userData); // Update map
+        });
+
+        tiktokConnection.on('error', (err) => {
+            console.error('TikTok Connection Error:', err);
+        });
+
+        tiktokConnection.on('disconnected', () => {
+            console.log('TikTok LIVE disconnected. User like counts will reset on next connection.');
+            // Reset user like data when the main connection is lost
+            userLikeData = new Map();
+        });
+
+    } catch (err) {
+        console.error("Error connecting to TikTok:", err.message);
+        console.error("Please ensure the TikTok username is correct and the account is LIVE.");
+    }
+}
+
+function broadcastToClients(message) {
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(message));
+        }
+    });
+}
+
+startTikTokConnection();
+console.log('WebSocket server started on port 21213');
+console.log(`Attempting to connect to TikTok user: ${tiktokUsername}`);
