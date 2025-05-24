@@ -1,75 +1,102 @@
-/* styles.css - Updated for Light Theme & Type-based Card Backgrounds */
+/* styles.css - Updated for Abstract Blurred Background & Frosted Glass UI */
+
+/* Root variables for easier color management (optional, but good practice) */
+:root {
+    --background-blur-strength: 60px;
+    --panel-blur-strength: 15px;
+    --panel-background-color: rgba(25, 28, 36, 0.45); /* Dark, slightly blueish translucent */
+    --panel-border-color: rgba(255, 255, 255, 0.12);
+    --text-primary-color: #f0f2f5;
+    --text-secondary-color: #a8b2d1;
+    --accent-color: #64ffda; /* A vibrant accent for highlights, similar to image */
+    --card-default-text-color: #ffffff;
+}
+
 body {
     margin: 0;
     padding: 0;
-    background: #f0f2f5; /* Light gray background for the page */
+    background: #0a192f; /* Very dark blue base background */
+    color: var(--text-primary-color);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    overflow: hidden;
+    overflow: hidden; /* Important for full-page pseudo-elements */
     position: relative;
-    color: #333; /* Default text color for light theme */
 }
 
-body::before { /* Optional: subtle pattern or very light gradient for body */
+/* Abstract Blurred Background using Pseudo-element */
+body::before {
     content: '';
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: radial-gradient(circle at top left, rgba(0, 123, 255, 0.03), transparent 40%),
-                radial-gradient(circle at bottom right, rgba(255, 0, 123, 0.03), transparent 40%);
-    pointer-events: none;
-    z-index: 0;
+    z-index: -1; /* Behind all content */
+    background: 
+        radial-gradient(circle at 10% 20%, hsla(180, 100%, 50%, 0.3) 0%, transparent 30%),
+        radial-gradient(circle at 90% 30%, hsla(270, 100%, 60%, 0.3) 0%, transparent 35%),
+        radial-gradient(circle at 30% 80%, hsla(330, 100%, 55%, 0.3) 0%, transparent 30%),
+        radial-gradient(circle at 70% 70%, hsla(220, 100%, 60%, 0.35) 0%, transparent 35%);
+    filter: blur(var(--background-blur-strength));
+    transform: scale(1.2); /* Ensure blur covers edges */
 }
 
 .header {
     text-align: center;
-    padding: 20px;
-    background: #ffffff; /* White header background */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* Softer shadow */
+    padding: 20px 20px 15px 20px;
+    background: var(--panel-background-color);
+    backdrop-filter: blur(var(--panel-blur-strength)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--panel-blur-strength)) saturate(150%); /* Safari */
+    border-bottom: 1px solid var(--panel-border-color);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
     z-index: 10;
-    position: relative;
+    position: relative; /* Ensures it's above the body::before */
 }
 
 h1 {
-    color: #d92e2e; /* Adjusted main title color */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+    color: var(--accent-color); /* Use accent color */
+    font-size: 2.2em;
+    font-weight: 700;
+    text-shadow: 0 0 10px hsla(180, 100%, 50%, 0.5); /* Glow effect */
     margin-bottom: 5px;
 }
 
 .subtitle {
-    color: #555; /* Darker gray for subtitle */
-    font-size: 16px;
+    color: var(--text-secondary-color);
+    font-size: 1em;
 }
 
 .main-container {
     display: flex;
     flex: 1;
     padding: 20px;
-    gap: 25px; /* Increased gap */
+    gap: 20px;
     justify-content: center;
     align-items: flex-start;
     position: relative;
-    z-index: 1;
+    z-index: 1; /* Above body::before */
 }
 
 .control-panel, .emulator-panel {
-    width: 320px; /* Slightly wider panels */
-    padding: 25px;
-    background: #ffffff;
-    border-radius: 12px; /* More rounded corners */
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* Softer, more diffused shadow */
+    width: 300px;
+    padding: 20px;
+    background: var(--panel-background-color);
+    backdrop-filter: blur(var(--panel-blur-strength)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--panel-blur-strength)) saturate(150%); /* Safari */
+    border-radius: 12px;
+    border: 1px solid var(--panel-border-color);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
     height: fit-content;
     z-index: 5;
 }
 
 .control-panel h3, .emulator-panel h3 {
-    color: #333;
+    color: var(--text-primary-color);
     margin-top: 0;
     margin-bottom: 15px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--panel-border-color);
     padding-bottom: 10px;
+    font-weight: 600;
 }
 
 .game-area {
@@ -80,7 +107,7 @@ h1 {
     justify-content: center;
     position: relative;
     overflow: hidden;
-    min-height: 680px; /* Adjusted for card height */
+    min-height: 650px;
 }
 
 .pokemon-cards {
@@ -90,78 +117,77 @@ h1 {
     position: relative;
     width: 100%;
     height: 100%;
-    min-height: 640px;
+    min-height: 600px; /* Adjusted to better fit cards */
 }
 
 .pokemon-card {
-    width: 350px; /* Slightly adjusted */
-    height: 600px; /* Slightly adjusted */
-    border-radius: 20px; /* Softer radius */
+    width: 340px;
+    height: 580px; /* Card dimensions */
+    border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12); /* Softer shadow */
-    /* Default background, will be overridden by JS. RGBA for potential translucency */
-    background: rgba(255, 255, 255, 0.7); 
-    border: 1px solid rgba(0, 0, 0, 0.05); /* Subtle border */
+    /* Base styling for the card - JS sets type-specific background with transparency */
+    background: rgba(30, 35, 45, 0.5); /* Default dark translucent if JS fails */
+    /* Optional: if cards should also have backdrop-filter. Adjust JS transparency. */
+    /* backdrop-filter: blur(5px) saturate(100%); */ 
+    /* -webkit-backdrop-filter: blur(5px) saturate(100%); */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Slightly more visible border */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* Darker shadow for depth */
     position: absolute;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: 25px;
+    padding: 20px;
     box-sizing: border-box;
     opacity: 0;
     animation: scaleFade 0.6s ease-out forwards;
-    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease-out; /* Smoother transition */
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease-out;
     z-index: 100;
-    color: #fff; /* Default text on card - might need adjustment based on type background */
+    color: var(--card-default-text-color); /* Default text color on card */
 }
 
-/* Styling for stacked cards - adjust opacity for light theme if needed */
-.pokemon-card.prev-card-1 { z-index: 99; opacity: 0.8; transform: translateX(12px) translateY(15px) scale(0.96); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-.pokemon-card.prev-card-2 { z-index: 98; opacity: 0.6; transform: translateX(24px) translateY(30px) scale(0.92); box-shadow: 0 6px 15px rgba(0,0,0,0.08); }
-.pokemon-card.prev-card-3 { z-index: 97; opacity: 0.4; transform: translateX(36px) translateY(45px) scale(0.88); box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
-.pokemon-card.prev-card-4 { z-index: 96; opacity: 0; transform: translateX(48px) translateY(60px) scale(0.84); }
-
+/* Stacked cards styling */
+.pokemon-card.prev-card-1 { z-index: 99; opacity: 0.7; transform: translateX(10px) translateY(12px) scale(0.97); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+.pokemon-card.prev-card-2 { z-index: 98; opacity: 0.45; transform: translateX(20px) translateY(24px) scale(0.94); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.pokemon-card.prev-card-3 { z-index: 97; opacity: 0.2; transform: translateX(30px) translateY(36px) scale(0.91); box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+.pokemon-card.prev-card-4 { z-index: 96; opacity: 0; transform: translateX(40px) translateY(48px) scale(0.88); }
 
 .pokemon-image-container {
     width: 100%;
-    height: 280px; /* Adjusted height */
+    height: 260px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 20px;
-    margin-bottom: 15px;
-    background: transparent;
+    margin-top: 15px;
+    margin-bottom: 10px;
 }
 
 .pokemon-image {
-    max-width: 85%;
+    max-width: 90%;
     max-height: 100%;
     object-fit: contain;
-    image-rendering: crisp-edges; /* or pixelated, depending on preference */
-    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2));
-    animation: float 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35)); /* Stronger shadow for image */
+    animation: float 3s ease-in-out infinite;
 }
 
 .pokemon-name {
-    font-size: 34px; /* Slightly smaller */
-    font-weight: bold;
-    color: #fff; /* Default, JS might override if background is too light */
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    margin-top: 10px;
+    font-size: 30px;
+    font-weight: 700;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    margin-top: 8px;
     text-align: center;
-    text-transform: capitalize; /* Softer than uppercase */
+    text-transform: capitalize;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 5px 10px;
-    border-radius: 8px;
-    /* background: rgba(0,0,0,0.1); /* Optional subtle background for name */
+    padding: 3px 8px;
+    border-radius: 6px;
+    /* Color is set inline by JS if needed, or defaults from .pokemon-card */
 }
 
 .pokemon-name.shiny {
-    color: #e6c525; /* Richer gold */
-    text-shadow: 0 0 6px #fff2a8, 0 0 10px #e6c525;
+    color: #FFD700; /* Gold for shiny */
+    text-shadow: 0 0 8px #FFFACD, 0 0 12px #FFD700, 0 0 15px #FF8C00; /* More pronounced shiny glow */
 }
 
 .pokemon-types {
@@ -169,155 +195,159 @@ h1 {
     justify-content: center;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 12px;
-    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-bottom: 8px;
 }
 
 .pokemon-type {
-    padding: 6px 15px;
-    border-radius: 15px;
-    font-size: 13px;
+    padding: 5px 14px;
+    border-radius: 12px;
+    font-size: 12px;
     font-weight: 500;
-    color: #fff;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.3);
-    /* Background color will be set by JS or more specific CSS */
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    /* Background and border color will be set by JS */
+    /* color will be set by JS for contrast */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .user-name {
     position: absolute;
-    bottom: 20px;
-    font-size: 16px;
-    color: #f0f0f0; /* Lighter text color */
+    bottom: 15px;
+    font-size: 15px;
     font-weight: 500;
-    background: rgba(0, 0, 0, 0.4);
-    padding: 8px 18px;
-    border-radius: 15px;
+    /* Color and background set by JS for contrast */
+    padding: 7px 16px;
+    border-radius: 10px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 90%;
+    max-width: 85%;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .pokemon-stats-display {
     display: flex;
     justify-content: space-around;
-    width: 85%;
-    margin-top: 15px;
-    padding: 10px 0; /* Adjusted padding */
-    background-color: rgba(0, 0, 0, 0.05); /* Very subtle background for stats area */
+    width: 90%;
+    margin-top: 12px;
+    padding: 8px 0;
+    /* Background and text color set by JS for contrast */
     border-radius: 8px;
-    color: #fff; /* Default, JS may need to adjust based on card bg */
+    /* color will be set by .pokemon-card or JS */
 }
 
 .stat-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .stat-item .stat-label {
-    font-size: 11px; /* Smaller label */
-    color: rgba(255,255,255,0.7); /* Lighter for contrast */
-    margin-bottom: 3px;
+    font-size: 10px;
+    /* Color set by JS */
+    margin-bottom: 2px;
     text-transform: uppercase;
+    font-weight: 400;
 }
 
 .stat-item .stat-value {
     font-weight: 600;
 }
 
-
+/* Control Panel Elements Styling */
 button {
-    background: #007bff; /* Blue for a light theme */
-    color: white;
+    background: var(--accent-color);
+    color: #0a192f; /* Dark text on accent button */
     border: none;
-    padding: 12px 20px;
+    padding: 11px 18px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 15px;
-    font-weight: 500; /* Slightly less bold */
-    margin: 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 6px 0;
     width: 100%;
-    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
-
 button:hover {
-    background: #0056b3;
+    background: hsl(165, 100%, 60%); /* Slightly lighter accent */
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
-
 button:disabled {
-    background: #ced4da; /* Lighter disabled color */
-    color: #6c757d;
+    background: rgba(108, 117, 125, 0.5); /* More translucent disabled */
+    color: rgba(240, 242, 245, 0.7);
     transform: none;
     cursor: not-allowed;
     box-shadow: none;
 }
 
 .btn-secondary {
-    background: #6c757d; /* Gray for secondary */
+    background: rgba(108, 117, 125, 0.7); /* Translucent secondary */
+    color: var(--text-primary-color);
 }
 .btn-secondary:hover {
-    background: #5a6268;
+    background: rgba(90, 98, 104, 0.8);
 }
 
 .status-indicator {
     display: flex;
     align-items: center;
-    margin: 20px 0;
-    padding: 12px;
+    margin: 15px 0;
+    padding: 10px;
     border-radius: 8px;
-    background: #e9ecef; /* Light gray for status background */
+    background: rgba(0,0,0,0.2); /* Subtle dark background for status */
 }
-
-.status-dot { width: 14px; height: 14px; border-radius: 50%; margin-right: 10px; }
-.status-dot.connected { background-color: #28a745; box-shadow: 0 0 8px #28a745; }
-.status-dot.disconnected { background-color: #dc3545; }
+.status-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
+.status-dot.connected { background-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+.status-dot.disconnected { background-color: #ff4d4d; }
 .status-dot.connecting { background-color: #ffc107; animation: pulse 1.5s infinite; }
-.status-text { font-weight: 500; color: #495057; }
+.status-text { font-weight: 500; color: var(--text-secondary-color); }
 
-.connection-stats { margin-top: 15px; padding: 15px; background: #e9ecef; border-radius: 8px; }
-.stat-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px; }
-.stat-label { font-weight: 500; color: #495057; }
-.stat-value { color: #212529; font-weight: 500; }
+.connection-stats { margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.15); border-radius: 8px; }
+.stat-row { display: flex; justify-content: space-between; margin: 7px 0; font-size: 13px; }
+.stat-label { font-weight: 500; color: var(--text-secondary-color); }
+.stat-value { color: var(--text-primary-color); font-weight: 500; }
 
 .emulator-input, .emulator-select {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ced4da;
+    padding: 9px 11px;
+    background: rgba(255,255,255,0.05); /* Very subtle */
+    border: 1px solid var(--panel-border-color);
+    color: var(--text-primary-color);
     border-radius: 6px;
     box-sizing: border-box;
-    font-size: 14px;
-    margin-bottom: 8px; /* Added consistent margin */
+    font-size: 13px;
+    margin-bottom: 8px;
 }
-.emulator-select { margin-bottom: 12px; }
+.emulator-input::placeholder { color: var(--text-secondary-color); opacity: 0.7; }
+.emulator-select option { background: #0a192f; color: var(--text-primary-color); } /* For dropdown options */
 
-#pokemon-pool-status { color: #495057; }
+#pokemon-pool-status { color: var(--text-secondary-color); font-size: 11px;}
+
+/* Animations */
+@keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 5px var(--status-dot-connecting-color, #ffc107); } 50% { opacity: 0.6; box-shadow: 0 0 10px var(--status-dot-connecting-color, #ffc107); } 100% { opacity: 1; box-shadow: 0 0 5px var(--status-dot-connecting-color, #ffc107); } }
+@keyframes scaleFade { 0% { transform: scale(0.9) translateY(15px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
 
-@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-@keyframes scaleFade { 0% { transform: scale(0.85) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-
+/* Responsive Adjustments */
 @media (max-width: 1200px) {
     .main-container { flex-direction: column; align-items: center; }
-    .control-panel, .emulator-panel { width: 90%; max-width: 450px; margin-bottom: 20px; }
-    .game-area { width: 100%; min-height: 600px; }
-    .pokemon-card { width: 90%; max-width: 340px; height: 580px; }
+    .control-panel, .emulator-panel { width: 90%; max-width: 480px; margin-bottom: 20px; }
+    .game-area { width: 100%; min-height: 580px; } /* Adjust for smaller card */
+    .pokemon-card { width: 90%; max-width: 320px; height: 540px; } /* Smaller cards */
 }
 @media (max-width: 768px) {
-    .pokemon-card { height: 520px; border-radius: 18px; padding: 20px; }
-    .pokemon-image-container { height: 230px; margin-top: 15px; }
-    .pokemon-name { font-size: 28px; }
-    .pokemon-types { margin-top: 10px; }
-    .pokemon-type { padding: 5px 12px; font-size: 12px; }
-    .user-name { font-size: 14px; padding: 6px 15px; bottom: 15px; }
-    .pokemon-stats-display { width: 90%; margin-top: 10px; padding: 8px 0; }
-    .stat-item .stat-label { font-size: 10px;}
-    .stat-item .stat-value { font-size: 13px;}
-
+    .pokemon-card { height: 500px; border-radius: 16px; padding: 15px; }
+    .pokemon-image-container { height: 220px; margin-top: 10px; }
+    .pokemon-name { font-size: 26px; }
+    .pokemon-types { margin-top: 8px; }
+    .pokemon-type { padding: 4px 10px; font-size: 11px; }
+    .user-name { font-size: 13px; padding: 6px 12px; bottom: 12px; }
+    .pokemon-stats-display { width: 90%; margin-top: 8px; padding: 6px 0; }
+    .stat-item .stat-label { font-size: 9px;}
+    .stat-item .stat-value { font-size: 12px;}
 }
