@@ -347,7 +347,7 @@ function hexToRgba(hex, alpha = 1) {
                 return `<span class="pokemon-type" style="background-color: ${hexToRgba(typeBgColor, 0.7)}; border-color: ${hexToRgba(typeBgColor, 0.9)}; color: ${typePillTextColor};">${type.charAt(0).toUpperCase() + type.slice(1)}</span>`;
             }).join('') || `<span class="pokemon-type" style="color: ${cardElementsColor};">Unknown</span>`}
         </div>
-        <div class="pokemon-stats-display" style="color: ${cardElementsColor};"> {/* Ensure stats text also contrasts */}
+        <div class="pokemon-stats-display" style="color: ${cardElementsColor};"> 
             <div class="stat-item">
                 <span class="stat-label" style="color: ${hexToRgba(cardElementsColor === '#FFFFFF' ? '255,255,255':'50,50,50', 0.7)};">HP</span>
                 <span class="stat-value">${pokemon.stats && pokemon.stats.hp !== undefined ? pokemon.stats.hp : 'N/A'}</span>
