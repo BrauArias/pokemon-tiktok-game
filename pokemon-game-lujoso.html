@@ -51,7 +51,7 @@
 
         <div class="emulator-panel">
             <h3>Event Emulator</h3>
-            <div class="emulator-controls">
+           <div class="emulator-controls">
                 <input type="text" id="emulator-username" class="emulator-input" placeholder="Viewer username" value="pokefan123">
                 <select id="emulator-gift-type" class="emulator-select">
                     <option value="rose">Rose</option>
@@ -64,6 +64,7 @@
                 <button id="add-viewer-btn" class="btn-secondary">Add Viewer</button>
                 <button id="auto-send-btn" disabled>Auto Send (5s)</button>
                 <button id="stop-auto-btn" disabled>Stop Auto</button>
+                <button id="emulate-100-likes-btn" class="btn-secondary" disabled>Emulate 100 User Likes Gift</button>
             </div>
         </div>
     </div>
@@ -80,7 +81,8 @@
         tiktok:   { legendary: 0.01,  epic: 0.05,  rare: 0.24, common: 0.70 },
         diamond:  { legendary: 0.03,  epic: 0.12, rare: 0.35, common: 0.50 },
         galaxy:   { legendary: 0.08,  epic: 0.27, rare: 0.40, common: 0.25 },
-        universe: { legendary: 0.25,  epic: 0.40, rare: 0.25, common: 0.10 }
+        universe: { legendary: 0.25,  epic: 0.40, rare: 0.25, common: 0.10 },
+        user_100_likes_reward: { legendary: 0.00, epic: 0.00, rare: 0.00, common: 1.00 },
     };
     // Adjust SHINY_CHANCE: 1/X. If you expect ~150 gifts for one shiny:
     const SHINY_CHANCE = 1 / 150; 
@@ -115,6 +117,7 @@
     const stopAutoBtn = document.getElementById('stop-auto-btn');
     const regionSelect = document.getElementById('region-select');
     const pokemonPoolStatus = document.getElementById('pokemon-pool-status');
+    const emulate100LikesBtn = document.getElementById('emulate-100-likes-btn');
 
     // --- Helper Functions ---
     function getPokemonFileName(name) {
@@ -159,11 +162,13 @@
         }
     }
 
-    function filterPokemonByRegion(selectedRegion) {
+     function filterPokemonByRegion(selectedRegion) {
         if (allPokemonData.length === 0) {
             currentPokemonPool = [];
             pokemonPoolStatus.textContent = 'Pokémon data not loaded or is empty.';
-            sendGiftBtn.disabled = true; autoSendBtn.disabled = true;
+            sendGiftBtn.disabled = true; 
+            autoSendBtn.disabled = true;
+            if (emulate100LikesBtn) emulate100LikesBtn.disabled = true;
             return;
         }
 
@@ -174,13 +179,15 @@
             currentPokemonPool = allPokemonData.filter(p => p.region && p.region.toLowerCase() === selectedRegion);
         }
 
-        if (currentPokemonPool.length === 0) {
+        const poolIsEmpty = currentPokemonPool.length === 0;
+        if (poolIsEmpty) {
             pokemonPoolStatus.textContent = `0 Pokémon in ${selectedRegion === "all" ? "selected pool" : selectedRegion}.`;
-            sendGiftBtn.disabled = true; autoSendBtn.disabled = true;
         } else {
             pokemonPoolStatus.textContent = `${currentPokemonPool.length} Pokémon available.`;
-            sendGiftBtn.disabled = false; autoSendBtn.disabled = false;
         }
+        sendGiftBtn.disabled = poolIsEmpty; 
+        autoSendBtn.disabled = poolIsEmpty;
+        if (emulate100LikesBtn) emulate100LikesBtn.disabled = poolIsEmpty;
     }
     
     function assignRandomPokemon(username, giftId, giftName) {
@@ -300,13 +307,22 @@
             updateConnectionStats();
         };
         websocket.onerror = (error) => { console.error("WebSocket Error:", error); updateStatus('disconnected', 'Connection Error'); /* Don't close here, onclose will handle */ };
-        websocket.onmessage = (event) => {
+            websocket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.event === 'gift') {
-                     handleGiftEvent(data.data);
+                    handleGiftEvent(data.data);
                 } else if (data.event === 'viewerCount') {
-                     activeViewersDisplay.textContent = data.data.viewerCount;
+                    activeViewersDisplay.textContent = data.data.viewerCount;
+                } else if (data.event === 'userSpecificLikeGift') { // --- NEW: Handle user specific like gift ---
+                    console.log(`User specific like gift received for: ${data.data.uniqueId} for reaching ${data.data.milestone} likes!`);
+                    // The server sends 'user_100_likes_reward' as giftName
+                    handleGiftEvent({ 
+                        uniqueId: data.data.uniqueId, 
+                        giftId: `user_like_${data.data.milestone}`, // A custom identifier for the "gift"
+                        giftName: data.data.giftName, // This will be 'user_100_likes_reward'
+                        timestamp: data.data.timestamp
+                    });
                 } else {
                     // console.log("Received unhandled message:", data);
                 }
@@ -366,10 +382,30 @@
     }
     function getRandomUsername() { return sampleUsernames[Math.floor(Math.random() * sampleUsernames.length)]; }
 
-    // --- Initial Setup on DOMContentLoaded ---
+    // --- NEW: Event Listener for the 100 Likes Emulator Button ---
+    if (emulate100LikesBtn) { // Check if button exists
+        emulate100LikesBtn.addEventListener('click', () => {
+            if (currentPokemonPool.length === 0) {
+                alert("Pokémon data not loaded or current pool is empty. Cannot emulate gift.");
+                return;
+            }
+            const username = emulatorUsername.value.trim() || getRandomUsername();
+            console.log(`Emulating '100 User Likes' Common Pokémon gift for ${username}`);
+            handleGiftEvent({
+                uniqueId: username,
+                giftId: 'emulator_like_milestone', // Custom ID for emulator
+                giftName: 'user_100_likes_reward', // Use the specific giftName for common Pokémon
+                timestamp: Date.now()
+            });
+        });
+    }
+
+    // --- MODIFIED: Initial Setup on DOMContentLoaded ---
     document.addEventListener('DOMContentLoaded', () => {
         updateStatus('disconnected', 'Disconnected');
-        loadPokemonData(); // This will also trigger the initial filterPokemonByRegion
+        // loadPokemonData will be called which then calls filterPokemonByRegion
+        // filterPokemonByRegion should handle enabling/disabling the new emulate100LikesBtn too.
+        loadPokemonData(); 
         updateConnectionStats();
 
         connectBtn.addEventListener('click', connect);
@@ -379,7 +415,44 @@
         autoSendBtn.addEventListener('click', startAutoSend);
         stopAutoBtn.addEventListener('click', stopAutoSend);
         regionSelect.addEventListener('change', (event) => filterPokemonByRegion(event.target.value));
+        // Note: The new emulate100LikesBtn listener is added above.
     });
+    // Modify filterPokemonByRegion to also enable/disable the new emulator button:
+    // (This is a snippet of the function, showing where to add the line)
+    /*
+    function filterPokemonByRegion(selectedRegion) {
+        // ... (existing code) ...
+
+        if (currentPokemonPool.length === 0) {
+            pokemonPoolStatus.textContent = `0 Pokémon in ${selectedRegion === "all" ? "selected pool" : selectedRegion}.`;
+            sendGiftBtn.disabled = true; autoSendBtn.disabled = true;
+            if (emulate100LikesBtn) emulate100LikesBtn.disabled = true; // Add this
+        } else {
+            pokemonPoolStatus.textContent = `${currentPokemonPool.length} Pokémon available.`;
+            sendGiftBtn.disabled = false; autoSendBtn.disabled = false;
+            if (emulate100LikesBtn) emulate100LikesBtn.disabled = false; // Add this
+        }
+    }
+    */
+    // Make sure to integrate the above changes into your existing filterPokemonByRegion function.
+    // Also, in loadPokemonData, after successful loading and initial filtering:
+    /*
+    async function loadPokemonData() {
+        // ...
+        try {
+            // ...
+            if (allPokemonData.length > 0) {
+                filterPokemonByRegion(regionSelect.value); // This will set button states
+                // The lines below might be redundant if filterPokemonByRegion handles it
+                // sendGiftBtn.disabled = currentPokemonPool.length === 0;
+                // autoSendBtn.disabled = currentPokemonPool.length === 0;
+                // if(emulate100LikesBtn) emulate100LikesBtn.disabled = currentPokemonPool.length === 0;
+            }
+            // ...
+        } // ...
+    }
+    */
+
 </script>
 </body>
 </html>
